@@ -1,0 +1,111 @@
+oob read occurs in the code snippet at the address below
+https://github.com/mavlink/c_library_v2/blob/92b1a43468e8737da2d4cc1e72304e6443dcfdd3/common/mavlink_msg_serial_control.h#L146
+
+sanitizer log in "heap overflow" but i think this crash(sanitizer) log is OOB READ
+
+sanitizer report：
+
+==44613==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x60300098996a at pc 0x7fe355eb8480 bp 0x7fffc6a85110 sp 0x7fffc6a848b8
+READ of size 70 at 0x60300098996a thread T0
+    #0 0x7fe355eb847f  (/lib/x86_64-linux-gnu/libasan.so.5+0x9b47f)
+    #1 0x55a46cb03a94 in mav_array_memcpy /home/bu9/Desktop/GCS/qgroundcontrol/libs/mavlink/include/mavlink/v2.0/ardupilotmega/../protocol.h:176
+    #2 0x55a46cb03d02 in mavlink_msg_serial_control_pack_chan /home/bu9/Desktop/GCS/qgroundcontrol/libs/mavlink/include/mavlink/v2.0/ardupilotmega/../common/./mavlink_msg_serial_control.h:128
+    #3 0x55a46cb06222 in MavlinkConsoleController::_sendSerialData(QByteArray, bool) /home/bu9/Desktop/GCS/qgroundcontrol/src/AnalyzeView/MavlinkConsoleController.cc:151
+    #4 0x55a46cb049f5 in MavlinkConsoleController::sendCommand(QString) /home/bu9/Desktop/GCS/qgroundcontrol/src/AnalyzeView/MavlinkConsoleController.cc:43
+    #5 0x55a46d645b30 in MavlinkConsoleController::qt_static_metacall(QObject*, QMetaObject::Call, int, void**) /home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/moc_MavlinkConsoleController.cpp:115
+    #6 0x55a46d6460fe in MavlinkConsoleController::qt_metacall(QMetaObject::Call, int, void**) /home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/moc_MavlinkConsoleController.cpp:170
+    #7 0x7fe351aad348 in QQmlObjectOrGadget::metacall(QMetaObject::Call, int, void**) const (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Qml.so.5+0x2b5348)
+    #8 0x7fe3519946bc in CallMethod(QQmlObjectOrGadget const&, int, int, int, int*, QV4::ExecutionEngine*, QV4::CallData*, QMetaObject::Call) [clone .constprop.335] (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Qml.so.5+0x19c6bc)
+    #9 0x7fe351996094 in CallPrecise(QQmlObjectOrGadget const&, QQmlPropertyData const&, QV4::ExecutionEngine*, QV4::CallData*, QMetaObject::Call) [clone .constprop.332] (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Qml.so.5+0x19e094)
+    #10 0x7fe351996e12 in QV4::QObjectMethod::callInternal(QV4::Value const*, QV4::Value const*, int) const (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Qml.so.5+0x19ee12)
+    #11 0x7fe3519b4862 in QV4::Moth::VME::interpret(QV4::CppStackFrame*, QV4::ExecutionEngine*, char const*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Qml.so.5+0x1bc862)
+    #12 0x7fe3519b7721 in QV4::Moth::VME::exec(QV4::CppStackFrame*, QV4::ExecutionEngine*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Qml.so.5+0x1bf721)
+    #13 0x7fe35194c1e4 in QV4::Function::call(QV4::Value const*, QV4::Value const*, int, QV4::ExecutionContext const*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Qml.so.5+0x1541e4)
+    #14 0x7fe351acd439 in QQmlJavaScriptExpression::evaluate(QV4::CallData*, bool*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Qml.so.5+0x2d5439)
+    #15 0x7fe351a78d4b in QQmlBoundSignalExpression::evaluate(void**) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Qml.so.5+0x280d4b)
+    #16 0x7fe351a7a612 in QQmlBoundSignal_callback(QQmlNotifierEndpoint*, void**) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Qml.so.5+0x282612)
+    #17 0x7fe351aace17 in QQmlNotifier::emitNotify(QQmlNotifierEndpoint*, void**) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Qml.so.5+0x2b4e17)
+    #18 0x7fe351a5c5c5 in QQmlData::signalEmitted(QAbstractDeclarativeData*, QObject*, int, void**) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Qml.so.5+0x2645c5)
+    #19 0x7fe350427c35 in void doActivate<false>(QObject*, int, void**) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x2d5c35)
+    #20 0x7fe353dbb8a0 in QQuickKeysAttached::keyPressed(QKeyEvent*, bool) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Quick.so.5+0x23a8a0)
+    #21 0x7fe353dba522 in QQuickItemPrivate::filterKeyEvent(QKeyEvent*, bool) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Quick.so.5+0x239522)
+    #22 0x7fe353dc7ca4 in QQuickItemPrivate::deliverKeyEvent(QKeyEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Quick.so.5+0x246ca4)
+    #23 0x7fe353dcb14f in QQuickItem::event(QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Quick.so.5+0x24a14f)
+    #24 0x7fe3530c643b in QApplicationPrivate::notify_helper(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Widgets.so.5+0x16343b)
+    #25 0x7fe3530ccf1f in QApplication::notify(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Widgets.so.5+0x169f1f)
+    #26 0x7fe3503ef807 in QCoreApplication::notifyInternal2(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x29d807)
+    #27 0x7fe353dbb727 in QQuickKeysAttached::keyPressed(QKeyEvent*, bool) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Quick.so.5+0x23a727)
+    #28 0x7fe353dba522 in QQuickItemPrivate::filterKeyEvent(QKeyEvent*, bool) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Quick.so.5+0x239522)
+    #29 0x7fe353dc7ca4 in QQuickItemPrivate::deliverKeyEvent(QKeyEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Quick.so.5+0x246ca4)
+    #30 0x7fe353dcb14f in QQuickItem::event(QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Quick.so.5+0x24a14f)
+    #31 0x7fe353e1582d in QQuickTextEdit::event(QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Quick.so.5+0x29482d)
+    #32 0x7fe3530c643b in QApplicationPrivate::notify_helper(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Widgets.so.5+0x16343b)
+    #33 0x7fe3530ccf1f in QApplication::notify(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Widgets.so.5+0x169f1f)
+    #34 0x7fe3503ef807 in QCoreApplication::notifyInternal2(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x29d807)
+    #35 0x7fe353dd59b6 in QQuickWindowPrivate::deliverKeyEvent(QKeyEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Quick.so.5+0x2549b6)
+    #36 0x7fe353dda73e in QQuickWindow::keyPressEvent(QKeyEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Quick.so.5+0x25973e)
+    #37 0x7fe35229163a in QWindow::event(QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Gui.so.5+0x17a63a)
+    #38 0x7fe353de63b8 in QQuickWindow::event(QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Quick.so.5+0x2653b8)
+    #39 0x7fe3530c643b in QApplicationPrivate::notify_helper(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Widgets.so.5+0x16343b)
+    #40 0x7fe3530ccf1f in QApplication::notify(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Widgets.so.5+0x169f1f)
+    #41 0x7fe3503ef807 in QCoreApplication::notifyInternal2(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x29d807)
+    #42 0x7fe352282e1a in QGuiApplicationPrivate::processKeyEvent(QWindowSystemInterfacePrivate::KeyEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Gui.so.5+0x16be1a)
+    #43 0x7fe352287934 in QGuiApplicationPrivate::processWindowSystemEvent(QWindowSystemInterfacePrivate::WindowSystemEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Gui.so.5+0x170934)
+    #44 0x7fe34621589b in QIBusPlatformInputContext::filterEventFinished(QDBusPendingCallWatcher*) /home/qt/work/qt/qtbase/src/plugins/platforminputcontexts/ibus/qibusplatforminputcontext.cpp:517
+    #45 0x7fe350427f2f in void doActivate<false>(QObject*, int, void**) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x2d5f2f)
+    #46 0x7fe3470a497e in QDBusPendingCallWatcher::finished(QDBusPendingCallWatcher*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5DBus.so.5+0x6b97e)
+    #47 0x7fe3470a4a5f in QDBusPendingCallWatcher::qt_static_metacall(QObject*, QMetaObject::Call, int, void**) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5DBus.so.5+0x6ba5f)
+    #48 0x7fe35041eda2 in QObject::event(QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x2ccda2)
+    #49 0x7fe3530c643b in QApplicationPrivate::notify_helper(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Widgets.so.5+0x16343b)
+    #50 0x7fe3530ccf1f in QApplication::notify(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Widgets.so.5+0x169f1f)
+    #51 0x7fe3503ef807 in QCoreApplication::notifyInternal2(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x29d807)
+    #52 0x7fe3503f2881 in QCoreApplicationPrivate::sendPostedEvents(QObject*, int, QThreadData*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x2a0881)
+    #53 0x7fe35044bb32 in postEventSourceDispatch(_GSource*, int (*)(void*), void*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x2f9b32)
+    #54 0x7fe3549bb17c in g_main_context_dispatch (/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x5217c)
+    #55 0x7fe3549bb3ff  (/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x523ff)
+    #56 0x7fe3549bb4a2 in g_main_context_iteration (/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x524a2)
+    #57 0x7fe35044b1cb in QEventDispatcherGlib::processEvents(QFlags<QEventLoop::ProcessEventsFlag>) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x2f91cb)
+    #58 0x7fe3503ee219 in QEventLoop::exec(QFlags<QEventLoop::ProcessEventsFlag>) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x29c219)
+    #59 0x7fe3503f71d2 in QCoreApplication::exec() (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x2a51d2)
+    #60 0x55a46d0a587c in main /home/bu9/Desktop/GCS/qgroundcontrol/src/main.cc:423
+    #61 0x7fe34fc3b0b2 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x270b2)
+    #62 0x55a46c75d84d in _start (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/QGroundControl+0xcae84d)
+
+0x60300098996a is located 0 bytes to the right of 26-byte region [0x603000989950,0x60300098996a)
+allocated by thread T0 here:
+    #0 0x7fe355f2abc8 in malloc (/lib/x86_64-linux-gnu/libasan.so.5+0x10dbc8)
+    #1 0x7fe35021282c in QArrayData::allocate(unsigned long, unsigned long, unsigned long, QFlags<QArrayData::AllocationOption>) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0xc082c)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow (/lib/x86_64-linux-gnu/libasan.so.5+0x9b47f) 
+Shadow bytes around the buggy address:
+  0x0c06801292d0: fd fd fd fd fa fa 00 00 00 04 fa fa 00 00 00 fa
+  0x0c06801292e0: fa fa fa fa fa fa fa fa 00 00 00 fa fa fa 00 00
+  0x0c06801292f0: 00 fa fa fa 00 00 00 fa fa fa 00 00 00 00 fa fa
+  0x0c0680129300: 00 00 00 00 fa fa 00 00 00 00 fa fa 00 00 00 fa
+  0x0c0680129310: fa fa 00 00 00 fa fa fa fd fd fd fd fa fa 00 00
+=>0x0c0680129320: 00 00 fa fa 00 00 00 fa fa fa 00 00 00[02]fa fa
+  0x0c0680129330: fd fd fd fd fa fa fd fd fd fd fa fa 00 00 00 00
+  0x0c0680129340: fa fa 00 00 00 00 fa fa 00 00 00 00 fa fa fa fa
+  0x0c0680129350: fa fa fa fa 00 00 00 fa fa fa fa fa fa fa fa fa
+  0x0c0680129360: 00 00 00 fa fa fa fa fa fa fa fa fa 00 00 00 00
+  0x0c0680129370: fa fa 00 00 00 00 fa fa 00 00 00 fa fa fa 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
