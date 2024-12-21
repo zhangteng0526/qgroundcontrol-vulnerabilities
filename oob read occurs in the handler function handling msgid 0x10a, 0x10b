@@ -1,0 +1,83 @@
+Expected Behavior：
+OOBread is likely to occur due to LOGGING_DATA* packets (msgid 266,267).
+
+Trigger behavior：
+In a normal mavlink packet, the length of the data field is within 249. So the value of the count field will also be within 249.
+However, if qgc receive the count field larger than 249, oob read occurs.
+
+
+ASan log：
+
+==22799==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x7ffc836430e0 at pc 0x7f24b7146480 bp 0x7ffc83642f60 sp 0x7ffc83642708
+READ of size 254 at 0x7ffc836430e0 thread T0
+    #0 0x7f24b714647f  (/lib/x86_64-linux-gnu/libasan.so.5+0x9b47f)
+    #1 0x7f24b14fc92f in QByteArray::QByteArray(char const*, int) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x11c92f)
+    #2 0x55ab68c934cd in Vehicle::_handleMavlinkLoggingData(__mavlink_message&) /home/bu9/Desktop/GCS/qgroundcontrol/src/Vehicle/Vehicle.cc:3424
+    #3 0x55ab68c682b1 in Vehicle::_mavlinkMessageReceived(LinkInterface*, __mavlink_message) /home/bu9/Desktop/GCS/qgroundcontrol/src/Vehicle/Vehicle.cc:704
+    #4 0x55ab68cb5a40 in QtPrivate::FunctorCall<QtPrivate::IndexesList<0, 1>, QtPrivate::List<LinkInterface*, __mavlink_message>, void, void (Vehicle::*)(LinkInterface*, __mavlink_message)>::call(void (Vehicle::*)(LinkInterface*, __mavlink_message), Vehicle*, void**) /home/bu9/Qt/5.15.2/gcc_64/include/QtCore/qobjectdefs_impl.h:152
+    #5 0x55ab68cb255c in void QtPrivate::FunctionPointer<void (Vehicle::*)(LinkInterface*, __mavlink_message)>::call<QtPrivate::List<LinkInterface*, __mavlink_message>, void>(void (Vehicle::*)(LinkInterface*, __mavlink_message), Vehicle*, void**) /home/bu9/Qt/5.15.2/gcc_64/include/QtCore/qobjectdefs_impl.h:185
+    #6 0x55ab68cad49f in QtPrivate::QSlotObject<void (Vehicle::*)(LinkInterface*, __mavlink_message), QtPrivate::List<LinkInterface*, __mavlink_message>, void>::impl(int, QtPrivate::QSlotObjectBase*, QObject*, void**, bool*) /home/bu9/Qt/5.15.2/gcc_64/include/QtCore/qobjectdefs_impl.h:418
+    #7 0x7f24b16b5f2f in void doActivate<false>(QObject*, int, void**) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x2d5f2f)
+    #8 0x55ab69424061 in MAVLinkProtocol::messageReceived(LinkInterface*, __mavlink_message) /home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/moc_MAVLinkProtocol.cpp:347
+    #9 0x55ab68d37fac in MAVLinkProtocol::receiveBytes(LinkInterface*, QByteArray) /home/bu9/Desktop/GCS/qgroundcontrol/src/comm/MAVLinkProtocol.cc:364
+    #10 0x55ab68d194c1 in QtPrivate::FunctorCall<QtPrivate::IndexesList<0, 1>, QtPrivate::List<LinkInterface*, QByteArray>, void, void (MAVLinkProtocol::*)(LinkInterface*, QByteArray)>::call(void (MAVLinkProtocol::*)(LinkInterface*, QByteArray), MAVLinkProtocol*, void**) /home/bu9/Qt/5.15.2/gcc_64/include/QtCore/qobjectdefs_impl.h:152
+    #11 0x55ab68d1705a in void QtPrivate::FunctionPointer<void (MAVLinkProtocol::*)(LinkInterface*, QByteArray)>::call<QtPrivate::List<LinkInterface*, QByteArray>, void>(void (MAVLinkProtocol::*)(LinkInterface*, QByteArray), MAVLinkProtocol*, void**) /home/bu9/Qt/5.15.2/gcc_64/include/QtCore/qobjectdefs_impl.h:185
+    #12 0x55ab68d15c8f in QtPrivate::QSlotObject<void (MAVLinkProtocol::*)(LinkInterface*, QByteArray), QtPrivate::List<LinkInterface*, QByteArray>, void>::impl(int, QtPrivate::QSlotObjectBase*, QObject*, void**, bool*) /home/bu9/Qt/5.15.2/gcc_64/include/QtCore/qobjectdefs_impl.h:418
+    #13 0x7f24b16acda2 in QObject::event(QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x2ccda2)
+    #14 0x7f24b435443b in QApplicationPrivate::notify_helper(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Widgets.so.5+0x16343b)
+    #15 0x7f24b435af1f in QApplication::notify(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Widgets.so.5+0x169f1f)
+    #16 0x7f24b167d807 in QCoreApplication::notifyInternal2(QObject*, QEvent*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x29d807)
+    #17 0x7f24b1680881 in QCoreApplicationPrivate::sendPostedEvents(QObject*, int, QThreadData*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x2a0881)
+    #18 0x7f24b16d9b32 in postEventSourceDispatch(_GSource*, int (*)(void*), void*) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x2f9b32)
+    #19 0x7f24b5c4917c in g_main_context_dispatch (/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x5217c)
+    #20 0x7f24b5c493ff  (/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x523ff)
+    #21 0x7f24b5c494a2 in g_main_context_iteration (/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x524a2)
+    #22 0x7f24b16d91cb in QEventDispatcherGlib::processEvents(QFlags<QEventLoop::ProcessEventsFlag>) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x2f91cb)
+    #23 0x7f24b167c219 in QEventLoop::exec(QFlags<QEventLoop::ProcessEventsFlag>) (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x29c219)
+    #24 0x7f24b16851d2 in QCoreApplication::exec() (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/Qt/libs/libQt5Core.so.5+0x2a51d2)
+    #25 0x55ab68d5887c in main /home/bu9/Desktop/GCS/qgroundcontrol/src/main.cc:423
+    #26 0x7f24b0ec90b2 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x270b2)
+    #27 0x55ab6841084d in _start (/home/bu9/Desktop/GCS/build-qgroundcontrol-Desktop_Qt_5_15_2_GCC_64bit-ASAN/staging/QGroundControl+0xcae84d)
+
+Address 0x7ffc836430e0 is located in stack of thread T0 at offset 320 in frame
+    #0 0x55ab68c933a9 in Vehicle::_handleMavlinkLoggingData(__mavlink_message&) /home/bu9/Desktop/GCS/qgroundcontrol/src/Vehicle/Vehicle.cc:3420
+
+  This frame has 2 object(s):
+    [32, 40) '<unknown>'
+    [64, 320) 'log' (line 3421) <== Memory access at offset 320 overflows this variable
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-overflow (/lib/x86_64-linux-gnu/libasan.so.5+0x9b47f) 
+Shadow bytes around the buggy address:
+  0x1000106c05c0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x1000106c05d0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x1000106c05e0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x1000106c05f0: 00 00 00 00 f1 f1 f1 f1 00 f2 f2 f2 00 00 00 00
+  0x1000106c0600: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x1000106c0610: 00 00 00 00 00 00 00 00 00 00 00 00[f3]f3 f3 f3
+  0x1000106c0620: f3 f3 f3 f3 00 00 00 00 00 00 00 00 00 00 00 00
+  0x1000106c0630: 00 00 00 00 f1 f1 f1 f1 00 f2 f2 f2 f8 f2 f2 f2
+  0x1000106c0640: f8 f2 f2 f2 00 f2 f2 f2 00 00 00 00 f2 f2 f2 f2
+  0x1000106c0650: 00 00 00 00 00 00 00 00 00 00 f2 f2 f2 f2 00 00
+  0x1000106c0660: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==22799==ABORTING
